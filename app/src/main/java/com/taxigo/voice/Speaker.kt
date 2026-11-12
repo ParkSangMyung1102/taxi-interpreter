@@ -9,15 +9,20 @@ import ai.pleos.playground.tts.constant.ErrorType
 import ai.pleos.playground.tts.constant.Mode
 import ai.pleos.playground.tts.listener.EventListener
 import ai.pleos.playground.tts.listener.OnInitializeListener
+import ai.pleos.playground.tts.listener.OnServerConnectionListener
 import java.util.Locale
 
 /** 문장 단위 TTS 큐. 문장마다 로케일을 바꿔 순서대로 재생한다. */
-class Speaker(context: Context, private val onError: (String) -> Unit) {
+class Speaker(
+    context: Context,
+    private val credentials: PleosCredentials?,
+    private val onError: (String) -> Unit,
+) {
 
     private class Utterance(val locale: Locale, val text: String)
 
-    // ON_DEVICE: 앱 등록/네트워크 없이 동작
-    private val tts = TextToSpeech(context, Mode.ON_DEVICE)
+    // 자격 증명 없으면 ON_DEVICE (앱 등록/네트워크 불필요)
+    private val tts = TextToSpeech(context, if (credentials != null) Mode.HYBRID else Mode.ON_DEVICE)
     private val handler = Handler(Looper.getMainLooper())
     private val queue = ArrayDeque<Utterance>()
     private var ready = false
@@ -52,8 +57,7 @@ class Speaker(context: Context, private val onError: (String) -> Unit) {
             override fun onSuccess() {
                 handler.post {
                     tts.addEventListener(events)
-                    ready = true
-                    if (!speaking) next()
+                    if (credentials != null) register(credentials) else markReady()
                 }
             }
 
@@ -62,6 +66,39 @@ class Speaker(context: Context, private val onError: (String) -> Unit) {
                 handler.post { onError("음성 출력 초기화 실패: $errorType") }
             }
         })
+    }
+
+    // 서버 요청은 onConnected 이후에. 실패/무응답이어도 막지 않고 진행 -> HYBRID가 온디바이스로 처리
+    private fun register(c: PleosCredentials) {
+        val timeout = Runnable {
+            Log.w(TAG, "registerApp timeout")
+            markReady()
+        }
+        handler.postDelayed(timeout, PleosCredentials.REGISTER_TIMEOUT_MS)
+        tts.registerApp(c.clientId, c.clientSecret, object : OnServerConnectionListener {
+            override fun onConnected() {
+                Log.i(TAG, "tts server connected")
+                handler.post {
+                    handler.removeCallbacks(timeout)
+                    markReady()
+                }
+            }
+
+            override fun onFailed(errorType: ErrorType) {
+                Log.w(TAG, "tts registerApp $errorType")
+                handler.post {
+                    handler.removeCallbacks(timeout)
+                    onError("음성 서버 연결 실패($errorType), 차량 내 엔진 사용")
+                    markReady()
+                }
+            }
+        })
+    }
+
+    private fun markReady() {
+        if (ready) return
+        ready = true
+        if (!speaking) next()
     }
 
     /** onDone은 큐가 다 비었을 때 한 번 호출된다. (null이면 기존 콜백 유지) */

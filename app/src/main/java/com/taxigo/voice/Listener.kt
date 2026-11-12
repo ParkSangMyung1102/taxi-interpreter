@@ -8,6 +8,7 @@ import ai.pleos.playground.stt.SpeechToText
 import ai.pleos.playground.stt.constant.ErrorType
 import ai.pleos.playground.stt.constant.Mode
 import ai.pleos.playground.stt.listener.OnInitializeListener
+import ai.pleos.playground.stt.listener.OnServerConnectionListener
 import ai.pleos.playground.stt.listener.ResultListener
 import java.util.Locale
 
@@ -15,7 +16,11 @@ import java.util.Locale
  * 한 번 listen() 하면 onFinal(text) 또는 onSilence() 중 하나로 끝난다.
  * 로케일은 매번 지정 (승객 차례: 승객 언어 / 기사 차례: ko-KR).
  */
-class Listener(context: Context, private val onError: (String) -> Unit) {
+class Listener(
+    context: Context,
+    private val credentials: PleosCredentials?,
+    private val onError: (String) -> Unit,
+) {
 
     private class Session(
         val onPartial: (String) -> Unit,
@@ -25,7 +30,7 @@ class Listener(context: Context, private val onError: (String) -> Unit) {
         val sentences = mutableListOf<String>()
     }
 
-    private val stt = SpeechToText(context, Mode.ON_DEVICE)
+    private val stt = SpeechToText(context, if (credentials != null) Mode.HYBRID else Mode.ON_DEVICE)
     private val handler = Handler(Looper.getMainLooper())
     private var ready = false
     private var pendingStart: (() -> Unit)? = null
@@ -83,9 +88,7 @@ class Listener(context: Context, private val onError: (String) -> Unit) {
             override fun onSuccess() {
                 handler.post {
                     stt.addListener(results)
-                    ready = true
-                    pendingStart?.invoke()
-                    pendingStart = null
+                    if (credentials != null) register(credentials) else markReady()
                 }
             }
 
@@ -94,6 +97,40 @@ class Listener(context: Context, private val onError: (String) -> Unit) {
                 handler.post { onError("음성 인식 초기화 실패: $errorType") }
             }
         })
+    }
+
+    // Speaker.register와 같은 방식
+    private fun register(c: PleosCredentials) {
+        val timeout = Runnable {
+            Log.w(TAG, "registerApp timeout")
+            markReady()
+        }
+        handler.postDelayed(timeout, PleosCredentials.REGISTER_TIMEOUT_MS)
+        stt.registerApp(c.clientId, c.clientSecret, object : OnServerConnectionListener {
+            override fun onConnected() {
+                Log.i(TAG, "stt server connected")
+                handler.post {
+                    handler.removeCallbacks(timeout)
+                    markReady()
+                }
+            }
+
+            override fun onFailed(errorType: ErrorType) {
+                Log.w(TAG, "stt registerApp $errorType")
+                handler.post {
+                    handler.removeCallbacks(timeout)
+                    onError("음성 서버 연결 실패($errorType), 차량 내 엔진 사용")
+                    markReady()
+                }
+            }
+        })
+    }
+
+    private fun markReady() {
+        if (ready) return
+        ready = true
+        pendingStart?.invoke()
+        pendingStart = null
     }
 
     fun listen(

@@ -5,10 +5,10 @@ plugins {
     id("org.jetbrains.kotlin.plugin.compose")
 }
 
-// 번역 API 키 (local.properties, 커밋 X)
+// local.properties (커밋 X)
+//   pleos.clientId / pleos.clientSecret   Playground My Project. 없으면 STT/TTS 온디바이스만
 //   papago.clientId / papago.clientSecret
-//   google.translateKey
-// 없으면 문장집만 사용
+//   google.translateKey                   번역 키 없으면 문장집만
 val localProps = Properties().apply {
     rootProject.file("local.properties").takeIf { it.exists() }?.inputStream()?.use { load(it) }
 }
@@ -25,6 +25,8 @@ android {
         versionCode = 1
         versionName = "0.1.0"
 
+        buildConfigField("String", "PLEOS_CLIENT_ID", "\"${localProp("pleos.clientId")}\"")
+        buildConfigField("String", "PLEOS_CLIENT_SECRET", "\"${localProp("pleos.clientSecret")}\"")
         buildConfigField("String", "PAPAGO_CLIENT_ID", "\"${localProp("papago.clientId")}\"")
         buildConfigField("String", "PAPAGO_CLIENT_SECRET", "\"${localProp("papago.clientSecret")}\"")
         buildConfigField("String", "GOOGLE_TRANSLATE_KEY", "\"${localProp("google.translateKey")}\"")

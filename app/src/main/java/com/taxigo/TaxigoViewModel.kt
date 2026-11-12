@@ -20,6 +20,7 @@ import com.taxigo.translate.PhrasebookTranslator
 import com.taxigo.translate.Translator
 import com.taxigo.vehicle.DoorWatcher
 import com.taxigo.voice.Listener
+import com.taxigo.voice.PleosCredentials
 import com.taxigo.voice.Speaker
 import java.util.Locale
 
@@ -66,8 +67,9 @@ class TaxigoViewModel(app: Application) : AndroidViewModel(app) {
         private set
 
     private val handler = Handler(Looper.getMainLooper())
-    private val speaker = Speaker(app) { lastError = it }
-    private val listener = Listener(app) { lastError = it }
+    private val pleos = PleosCredentials.fromBuildConfig()
+    private val speaker = Speaker(app, pleos) { lastError = it }
+    private val listener = Listener(app, pleos) { lastError = it }
     private val translator = createTranslator()
     private val navigator = Navigator(app, ::onRouteStarted) { lastError = it }
     private val doorWatcher = DoorWatcher(app, ::onPassengerBoarded) { lastError = it }
@@ -294,7 +296,7 @@ class TaxigoViewModel(app: Application) : AndroidViewModel(app) {
             BuildConfig.GOOGLE_TRANSLATE_KEY.isNotBlank() -> GoogleTranslator(BuildConfig.GOOGLE_TRANSLATE_KEY)
             else -> null
         }
-        Log.i(TAG, "translator: ${api?.javaClass?.simpleName ?: "phrasebook"}")
+        Log.i(TAG, "translator: ${api?.javaClass?.simpleName ?: "phrasebook"}, speech: ${if (pleos != null) "HYBRID" else "ON_DEVICE"}")
         return if (api != null) FallbackTranslator(api, phrasebook) else phrasebook
     }
 
