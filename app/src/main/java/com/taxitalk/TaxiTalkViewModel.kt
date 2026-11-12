@@ -1,6 +1,7 @@
 package com.taxitalk
 
 import android.app.Application
+import android.content.Intent
 import android.os.Handler
 import android.os.Looper
 import androidx.compose.runtime.getValue
@@ -289,7 +290,28 @@ class TaxiTalkViewModel(app: Application) : AndroidViewModel(app) {
         val lang = language ?: return
         activeRoute = place to minutes
         announceToPassenger(lang, routeMessage(lang, place, minutes))
+        // 내비가 화면을 가져가므로, 경로가 잡히면 통역 화면을 다시 앞으로 가져옵니다.
+        // (내비 음성 안내는 뒤에서 계속되고, 왼쪽 드라이빙 뷰에 턴바이턴 안내가 표시됨.
+        //  지도는 [지도 보기]나 하단 바로 언제든 볼 수 있음)
+        // 참고: Pleos 에뮬레이터 v2.1에서 이 호출은 로그에 BAL_BLOCK으로 찍히지만 실제로 앱이 앞으로 옵니다.
+        //       실차에서 막히면 기사님이 하단 바의 앱 아이콘을 한 번 누르면 됩니다.
+        mainHandler.postDelayed(::bringAppToFront, RETURN_TO_APP_DELAY_MS)
     }
+
+    private fun bringAppToFront() {
+        val app = getApplication<Application>()
+        val intent = Intent(app, MainActivity::class.java).addFlags(
+            Intent.FLAG_ACTIVITY_NEW_TASK or Intent.FLAG_ACTIVITY_REORDER_TO_FRONT or Intent.FLAG_ACTIVITY_SINGLE_TOP
+        )
+        try {
+            app.startActivity(intent)
+        } catch (e: Exception) {
+            lastError = "통역 화면으로 돌아오지 못했어요: ${e.message}"
+        }
+    }
+
+    /** 기사님이 지도를 보고 싶을 때 */
+    fun showMap() = navigator.showMap()
 
     private fun routeMessage(lang: PassengerLanguage, place: Place, minutes: Int?): String = when (lang) {
         PassengerLanguage.ENGLISH -> "Navigation to ${place.englishName} has started." +
@@ -353,6 +375,9 @@ class TaxiTalkViewModel(app: Application) : AndroidViewModel(app) {
         const val MAX_PROMPT_ROUNDS = 3
         const val PROMPT_PAUSE_MS = 4_000L
         const val RELISTEN_DELAY_MS = 300L
+
+        /** 경로가 잡힌 뒤 통역 화면으로 돌아오기까지 (기사님이 경로를 한눈에 볼 시간) */
+        const val RETURN_TO_APP_DELAY_MS = 3_000L
 
         /** 외국인/한국인 선택 화면에서 아무것도 누르지 않으면 한국인 승객으로 보는 시간 */
         const val ASK_FOREIGNER_TIMEOUT_MS = 15_000L

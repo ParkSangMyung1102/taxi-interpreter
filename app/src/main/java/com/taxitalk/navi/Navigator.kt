@@ -5,6 +5,7 @@ import android.os.Handler
 import android.os.Looper
 import android.util.Log
 import ai.pleos.playground.navi.constants.NaviErrorCode
+import ai.pleos.playground.navi.data.NavigationScreenRequest
 import ai.pleos.playground.navi.data.RouteInfo
 import ai.pleos.playground.navi.data.RouteStartInfo
 import ai.pleos.playground.navi.helper.NaviHelper
@@ -79,6 +80,11 @@ class Navigator(
                 address = place.address,
             )
         )
+    }
+
+    /** 차량 내비게이션 지도 화면을 앞으로 */
+    fun showMap() {
+        if (connected) navi.requestNavigationScreen(NavigationScreenRequest.Foreground)
     }
 
     fun cancel() {

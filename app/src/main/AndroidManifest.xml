@@ -14,6 +14,7 @@
     <!-- Pleos NaviHelper SDK: 차량 내비게이션에 목적지 설정 -->
     <uses-permission android:name="pleos.car.permission.NAVI_ROUTE" />
     <uses-permission android:name="pleos.car.permission.NAVI_ROUTE_SEARCH" />
+    <uses-permission android:name="pleos.car.permission.NAVI_CUSTOM_MAP" />
 
     <application
         android:allowBackup="false"

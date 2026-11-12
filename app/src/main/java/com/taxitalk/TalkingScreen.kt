@@ -69,7 +69,7 @@ fun TalkingScreen(vm: TaxiTalkViewModel, language: PassengerLanguage) {
             Spacer(Modifier.height(12.dp))
         }
         vm.activeRoute?.let { (place, minutes) ->
-            ActiveRouteCard(place, minutes)
+            ActiveRouteCard(place, minutes, onShowMap = vm::showMap)
             Spacer(Modifier.height(12.dp))
         }
 
@@ -156,18 +156,26 @@ private fun PendingDestinationCard(place: Place, onStart: () -> Unit, onDismiss:
 }
 
 @Composable
-private fun ActiveRouteCard(place: Place, minutes: Int?) {
-    Text(
-        "🧭 ${place.koreanName}(으)로 안내 중" + (minutes?.let { " · 약 ${it}분" } ?: ""),
-        color = Listening,
-        fontSize = 24.sp,
-        fontWeight = FontWeight.SemiBold,
-        modifier = Modifier
+private fun ActiveRouteCard(place: Place, minutes: Int?, onShowMap: () -> Unit) {
+    Row(
+        Modifier
             .fillMaxWidth()
             .clip(RoundedCornerShape(16.dp))
             .background(Card)
-            .padding(horizontal = 24.dp, vertical = 12.dp),
-    )
+            .padding(horizontal = 24.dp, vertical = 8.dp),
+        verticalAlignment = Alignment.CenterVertically,
+    ) {
+        Text(
+            "🧭 ${place.koreanName}(으)로 안내 중" + (minutes?.let { " · 약 ${it}분" } ?: ""),
+            color = Listening,
+            fontSize = 24.sp,
+            fontWeight = FontWeight.SemiBold,
+            modifier = Modifier.weight(1f),
+        )
+        OutlinedButton(onClick = onShowMap, modifier = Modifier.height(64.dp)) {
+            Text("🗺 지도 보기", fontSize = 22.sp, color = TextMain)
+        }
+    }
 }
 
 @Composable
