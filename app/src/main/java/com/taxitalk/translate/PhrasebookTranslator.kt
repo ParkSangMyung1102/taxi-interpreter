@@ -4,6 +4,7 @@ import com.taxitalk.PassengerLanguage
 import com.taxitalk.PassengerLanguage.ENGLISH
 import com.taxitalk.PassengerLanguage.FRENCH
 import com.taxitalk.PassengerLanguage.SPANISH
+import com.taxitalk.navi.Places
 
 /**
  * 번역 API를 붙이기 전까지 쓰는 "택시 상황 문장집" 번역기.
@@ -27,7 +28,9 @@ class PhrasebookTranslator : Translator {
 
     private fun passengerToKorean(text: String, lang: PassengerLanguage): String? {
         val t = text.lowercase()
-        destination(text, lang)?.let { return "${it.withEuro()} 가 주세요." }
+        // "take me to ○○" 형태이거나, 아는 장소 이름이 들어 있으면 목적지 요청으로 봅니다.
+        (destination(text, lang) ?: Places.find(text)?.koreanName)
+            ?.let { return "${it.withEuro()} 가 주세요." }
 
         val rules: List<Pair<List<String>, String>> = when (lang) {
             ENGLISH -> listOf(
@@ -85,8 +88,7 @@ class PhrasebookTranslator : Translator {
             .replace(Regex("(?i)^(the|el|la|le|les) "), "")
             .trim()
         if (place.isBlank()) return null
-        return KNOWN_PLACES.entries.firstOrNull { (key, _) -> key in place.lowercase() }?.value
-            ?: place
+        return Places.find(place)?.koreanName ?: place
     }
 
     /** "경복궁" → "경복궁으로", "남대문" → "남대문으로", "공항" → "공항으로" (받침에 따라 로/으로) */
@@ -131,25 +133,5 @@ class PhrasebookTranslator : Translator {
         ENGLISH -> "It takes about $n minutes."
         SPANISH -> "Tarda unos $n minutos."
         FRENCH -> "Cela prend environ $n minutes."
-    }
-
-    private companion object {
-        /** 외국인이 자주 가는 곳: 영문 표기 → 한글 */
-        val KNOWN_PLACES = linkedMapOf(
-            "gyeongbokgung" to "경복궁",
-            "myeongdong" to "명동",
-            "namsan" to "남산타워",
-            "n seoul tower" to "남산타워",
-            "hongdae" to "홍대입구",
-            "insadong" to "인사동",
-            "dongdaemun" to "동대문디자인플라자",
-            "gangnam" to "강남역",
-            "lotte world" to "롯데월드",
-            "seoul station" to "서울역",
-            "incheon" to "인천공항",
-            "gimpo" to "김포공항",
-            "itaewon" to "이태원",
-            "bukchon" to "북촌한옥마을",
-        )
     }
 }

@@ -39,6 +39,7 @@ dependencies {
     implementation("ai.pleos.playground:Vehicle:2.3.2")
     implementation("ai.pleos.playground:TextToSpeech:3.3.1")
     implementation("ai.pleos.playground:SpeechToText:3.3.1")
+    implementation("ai.pleos.playground:NaviHelper:3.0.5")
 
     // 화면(Jetpack Compose)
     implementation(platform("androidx.compose:compose-bom:2025.06.01"))

@@ -30,11 +30,13 @@ import androidx.compose.ui.platform.LocalContext
 import androidx.compose.ui.text.font.FontWeight
 import androidx.compose.ui.unit.dp
 import androidx.compose.ui.unit.sp
+import com.taxitalk.navi.Place
 
 private val FinishRed = Color(0xFFE5484D)
 private val PassengerBubble = Color(0xFF1E2A38)
 private val DriverBubble = Color(0xFF26302A)
 private val Listening = Color(0xFF4ADE80)
+private val DestinationBg = Color(0xFF2A2440)
 
 /**
  * 통역 화면.
@@ -60,6 +62,15 @@ fun TalkingScreen(vm: TaxiTalkViewModel, language: PassengerLanguage) {
             verticalArrangement = Arrangement.spacedBy(12.dp),
         ) {
             items(vm.chat) { line -> ChatBubble(line, language) }
+        }
+
+        vm.pendingPlace?.let { place ->
+            PendingDestinationCard(place, onStart = vm::startNavigation, onDismiss = vm::dismissPlace)
+            Spacer(Modifier.height(12.dp))
+        }
+        vm.activeRoute?.let { (place, minutes) ->
+            ActiveRouteCard(place, minutes)
+            Spacer(Modifier.height(12.dp))
         }
 
         TurnStatus(vm.turn, vm.partialText, language)
@@ -107,6 +118,56 @@ private fun ChatBubble(line: ChatLine, language: PassengerLanguage) {
             )
         }
     }
+}
+
+/** 승객이 말한 목적지. 기사님이 "네"라고 하거나 [안내 시작]을 누르면 내비게이션에 설정됩니다. */
+@Composable
+private fun PendingDestinationCard(place: Place, onStart: () -> Unit, onDismiss: () -> Unit) {
+    Row(
+        Modifier
+            .fillMaxWidth()
+            .clip(RoundedCornerShape(16.dp))
+            .background(DestinationBg)
+            .padding(horizontal = 24.dp, vertical = 16.dp),
+        verticalAlignment = Alignment.CenterVertically,
+    ) {
+        Column(Modifier.weight(1f)) {
+            Text("📍 목적지 · \"네\"라고 하시면 안내를 시작해요", color = TextSub, fontSize = 20.sp)
+            Text(
+                "${place.koreanName}  (${place.englishName})",
+                color = TextMain,
+                fontSize = 32.sp,
+                fontWeight = FontWeight.Bold,
+            )
+        }
+        OutlinedButton(onClick = onDismiss, modifier = Modifier.height(80.dp)) {
+            Text("아니요", fontSize = 24.sp, color = TextSub)
+        }
+        Spacer(Modifier.size(16.dp))
+        Button(
+            onClick = onStart,
+            colors = ButtonDefaults.buttonColors(containerColor = Accent),
+            shape = RoundedCornerShape(16.dp),
+            modifier = Modifier.height(80.dp),
+        ) {
+            Text("안내 시작", fontSize = 28.sp, fontWeight = FontWeight.Bold)
+        }
+    }
+}
+
+@Composable
+private fun ActiveRouteCard(place: Place, minutes: Int?) {
+    Text(
+        "🧭 ${place.koreanName}(으)로 안내 중" + (minutes?.let { " · 약 ${it}분" } ?: ""),
+        color = Listening,
+        fontSize = 24.sp,
+        fontWeight = FontWeight.SemiBold,
+        modifier = Modifier
+            .fillMaxWidth()
+            .clip(RoundedCornerShape(16.dp))
+            .background(Card)
+            .padding(horizontal = 24.dp, vertical = 12.dp),
+    )
 }
 
 @Composable

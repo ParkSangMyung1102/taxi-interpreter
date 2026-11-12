@@ -8,6 +8,9 @@ import androidx.compose.runtime.mutableStateListOf
 import androidx.compose.runtime.mutableStateOf
 import androidx.compose.runtime.setValue
 import androidx.lifecycle.AndroidViewModel
+import com.taxitalk.navi.Navigator
+import com.taxitalk.navi.Place
+import com.taxitalk.navi.Places
 import com.taxitalk.translate.PhrasebookTranslator
 import com.taxitalk.translate.Translator
 import com.taxitalk.vehicle.DoorWatcher
@@ -78,6 +81,14 @@ class TaxiTalkViewModel(app: Application) : AndroidViewModel(app) {
     /** 이번 운행의 대화 기록 */
     val chat = mutableStateListOf<ChatLine>()
 
+    /** 승객이 말한 목적지 (기사님 확인 전) */
+    var pendingPlace by mutableStateOf<Place?>(null)
+        private set
+
+    /** 차량 내비게이션으로 안내 중인 목적지와 예상 소요 시간(분) */
+    var activeRoute by mutableStateOf<Pair<Place, Int?>?>(null)
+        private set
+
     /** 개발 중 확인용 오류 메시지 */
     var lastError by mutableStateOf<String?>(null)
         private set
@@ -86,6 +97,11 @@ class TaxiTalkViewModel(app: Application) : AndroidViewModel(app) {
     private val speaker = Speaker(app, onError = { lastError = it })
     private val listener = Listener(app, onError = { lastError = it })
     private val translator: Translator = PhrasebookTranslator()
+    private val navigator = Navigator(
+        app,
+        onRouteStarted = ::onRouteStarted,
+        onError = { lastError = it },
+    )
     private val doorWatcher = DoorWatcher(
         app,
         onBoarded = ::onPassengerBoarded,
@@ -101,6 +117,7 @@ class TaxiTalkViewModel(app: Application) : AndroidViewModel(app) {
     init {
         speaker.start()
         listener.start()
+        navigator.start()
         try {
             doorWatcher.start()
         } catch (e: Exception) {
@@ -134,6 +151,8 @@ class TaxiTalkViewModel(app: Application) : AndroidViewModel(app) {
     fun finishRide() {
         stopEverything()
         chat.clear()
+        pendingPlace = null
+        activeRoute = null
         screen = Screen.Waiting
     }
 
@@ -179,6 +198,8 @@ class TaxiTalkViewModel(app: Application) : AndroidViewModel(app) {
     private fun onPassengerSaid(text: String) {
         val lang = language ?: return
         partialText = ""
+        // 아는 장소를 말했다면 목적지 카드를 띄워 기사님 확인을 기다립니다.
+        Places.find(text)?.let { pendingPlace = it }
         translator.toKorean(text, lang) { korean ->
             mainHandler.post {
                 chat += ChatLine(fromPassenger = true, original = text, translated = korean)
@@ -205,6 +226,8 @@ class TaxiTalkViewModel(app: Application) : AndroidViewModel(app) {
     private fun onDriverSaid(text: String) {
         val lang = language ?: return
         partialText = ""
+        // 목적지 카드가 떠 있을 때 기사님이 "네"라고 하면 바로 안내를 시작합니다.
+        if (pendingPlace != null && AFFIRMATIVE.containsMatchIn(text)) startNavigation()
         translator.fromKorean(text, lang) { translated ->
             mainHandler.post {
                 chat += ChatLine(fromPassenger = false, original = text, translated = translated)
@@ -217,6 +240,55 @@ class TaxiTalkViewModel(app: Application) : AndroidViewModel(app) {
                     speaker.say(lang.locale, translated, onDone = ::listenToPassenger)
                 }
             }
+        }
+    }
+
+    // ------------------------------------------------------------------ 내비게이션
+
+    /** 목적지 카드의 [안내 시작] 또는 기사님의 "네" → 차량 내비게이션에 목적지 설정 */
+    fun startNavigation() {
+        val place = pendingPlace ?: return
+        pendingPlace = null
+        navigator.go(place)
+    }
+
+    /** 목적지 카드 닫기 (잘못 알아들은 경우) */
+    fun dismissPlace() {
+        pendingPlace = null
+    }
+
+    /** 내비게이션이 경로를 찾음 → 승객에게 그 나라 말로 알려 드립니다. */
+    private fun onRouteStarted(place: Place, minutes: Int?) {
+        val lang = language ?: return
+        activeRoute = place to minutes
+        announceToPassenger(lang, routeMessage(lang, place, minutes))
+    }
+
+    private fun routeMessage(lang: PassengerLanguage, place: Place, minutes: Int?): String = when (lang) {
+        PassengerLanguage.ENGLISH -> "Navigation to ${place.englishName} has started." +
+            (minutes?.let { " It takes about $it minutes." } ?: "")
+        PassengerLanguage.SPANISH -> "Se inició la navegación a ${place.englishName}." +
+            (minutes?.let { " Tarda unos $it minutos." } ?: "")
+        PassengerLanguage.FRENCH -> "La navigation vers ${place.englishName} a commencé." +
+            (minutes?.let { " Cela prend environ $it minutes." } ?: "")
+    }
+
+    /**
+     * 대화 중간에 승객에게 안내를 끼워 넣습니다.
+     * 듣는 중이었다면 마이크를 먼저 끄고(자기 목소리를 듣지 않도록) 말한 뒤 같은 차례로 돌아갑니다.
+     */
+    private fun announceToPassenger(lang: PassengerLanguage, text: String) {
+        when (turn) {
+            Turn.PASSENGER_LISTENING, Turn.DRIVER_LISTENING -> {
+                val resume: () -> Unit =
+                    if (turn == Turn.DRIVER_LISTENING) ::listenToDriver else ::listenToPassenger
+                listener.cancel()
+                mainHandler.removeCallbacksAndMessages(null)
+                turn = Turn.SPEAKING_TO_PASSENGER
+                speaker.say(lang.locale, text, onDone = resume)
+            }
+            // 이미 말하는 중이면 대기열 뒤에 붙입니다. (끝나면 원래 예정된 차례로 넘어감)
+            else -> speaker.say(lang.locale, text)
         }
     }
 
@@ -245,6 +317,7 @@ class TaxiTalkViewModel(app: Application) : AndroidViewModel(app) {
     override fun onCleared() {
         stopEverything()
         doorWatcher.stop()
+        navigator.release()
         listener.release()
         speaker.release()
     }
@@ -253,5 +326,8 @@ class TaxiTalkViewModel(app: Application) : AndroidViewModel(app) {
         const val MAX_PROMPT_ROUNDS = 3
         const val PROMPT_PAUSE_MS = 4_000L
         const val RELISTEN_DELAY_MS = 300L
+
+        /** 기사님의 "네, 갈게요" 같은 승낙 표현 */
+        val AFFIRMATIVE = Regex("네|예|알겠|그럼요|물론|오케이|좋아요|갈게요|가겠습니다|출발")
     }
 }
