@@ -10,12 +10,10 @@ import ai.pleos.playground.vehicle.constant.area.DoorValue
 import ai.pleos.playground.vehicle.listener.DoorPositionListener
 
 /**
- * 승객 도어(조수석, 뒷좌석 좌우)를 지켜보다가
+ * 승객 도어(조수석, 뒷좌석 좌우)
  * "문이 열렸다가 모두 닫힘" = 승객이 탔다 고 판단해 알려 줍니다.
- *
- * Pleos Vehicle SDK의 콜백은 메인 스레드가 아닐 수 있으므로,
- * 화면을 바꾸는 쪽(onBoarded 등)은 항상 메인 스레드에서 호출합니다.
  */
+
 class DoorWatcher(
     context: Context,
     private val onBoarded: () -> Unit,

@@ -1,7 +1,6 @@
 <?xml version="1.0" encoding="utf-8"?>
 <manifest xmlns:android="http://schemas.android.com/apk/res/android">
 
-    <!-- 차량용(Android Automotive) 앱임을 선언 -->
     <uses-feature
         android:name="android.hardware.type.automotive"
         android:required="true" />
@@ -10,6 +9,8 @@
     <uses-permission android:name="pleos.car.permission.CAR_DOORS" />
     <!-- Pleos TextToSpeech SDK: 차량 스피커로 음성 안내 -->
     <uses-permission android:name="pleos.car.permission.TTS_SERVICE" />
+    <!-- Pleos SpeechToText SDK: 차량 마이크로 음성 인식 -->
+    <uses-permission android:name="pleos.car.permission.STT_SERVICE" />
 
     <application
         android:allowBackup="false"

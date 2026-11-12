@@ -28,11 +28,11 @@ import androidx.compose.ui.unit.dp
 import androidx.compose.ui.unit.sp
 
 // 차량 화면은 어두운 배경 + 큰 글씨가 기본입니다.
-private val Background = Color(0xFF101418)
-private val Card = Color(0xFF1E252C)
-private val TextMain = Color(0xFFF2F4F6)
-private val TextSub = Color(0xFF9AA4AE)
-private val Accent = Color(0xFF3D8BFD)
+internal val Background = Color(0xFF101418)
+internal val Card = Color(0xFF1E252C)
+internal val TextMain = Color(0xFFF2F4F6)
+internal val TextSub = Color(0xFF9AA4AE)
+internal val Accent = Color(0xFF3D8BFD)
 
 @Composable
 fun TaxiTalkScreen(vm: TaxiTalkViewModel) {
@@ -45,11 +45,7 @@ fun TaxiTalkScreen(vm: TaxiTalkViewModel) {
         when (val s = vm.screen) {
             Screen.Waiting -> WaitingScreen(onSimulateBoarding = vm::onPassengerBoarded)
             Screen.ChooseLanguage -> LanguageScreen(onChoose = vm::chooseLanguage)
-            is Screen.Talking -> TalkingScreen(
-                language = s.language,
-                onChangeLanguage = vm::changeLanguage,
-                onFinish = vm::finishRide,
-            )
+            is Screen.Talking -> TalkingScreen(vm, s.language)
         }
         vm.lastError?.let {
             Text(
@@ -72,7 +68,7 @@ private fun WaitingScreen(onSimulateBoarding: () -> Unit) {
         Text("승객을 기다리는 중입니다", color = TextMain, fontSize = 48.sp, fontWeight = FontWeight.Bold)
         Spacer(Modifier.height(16.dp))
         Text(
-            "승객 도어가 열렸다 닫히면 언어 선택 화면이 열립니다",
+            "승객 문이 열렸다 닫히면 언어 선택 화면이 열립니다",
             color = TextSub,
             fontSize = 20.sp,
         )
@@ -137,49 +133,3 @@ private fun FlagCard(lang: PassengerLanguage, modifier: Modifier, onClick: () ->
     }
 }
 
-@Composable
-private fun TalkingScreen(
-    language: PassengerLanguage,
-    onChangeLanguage: () -> Unit,
-    onFinish: () -> Unit,
-) {
-    Column(Modifier.fillMaxSize()) {
-        Row(verticalAlignment = Alignment.CenterVertically) {
-            Text(language.flag, fontSize = 48.sp)
-            Spacer(Modifier.padding(8.dp))
-            Text(
-                "${language.koreanName} 승객",
-                color = TextMain,
-                fontSize = 32.sp,
-                fontWeight = FontWeight.Bold,
-            )
-            Spacer(Modifier.weight(1f))
-            OutlinedButton(onClick = onChangeLanguage) {
-                Text("언어 변경", fontSize = 20.sp, color = TextSub)
-            }
-        }
-        Column(
-            Modifier
-                .fillMaxWidth()
-                .weight(1f),
-            verticalArrangement = Arrangement.Center,
-            horizontalAlignment = Alignment.CenterHorizontally,
-        ) {
-            Text(
-                language.greeting,
-                color = TextMain,
-                fontSize = 40.sp,
-                textAlign = TextAlign.Center,
-            )
-            Spacer(Modifier.height(24.dp))
-            Text("통역 기능은 다음 단계에서 연결됩니다", color = TextSub, fontSize = 22.sp)
-        }
-        Button(
-            onClick = onFinish,
-            colors = ButtonDefaults.buttonColors(containerColor = Accent),
-            modifier = Modifier.align(Alignment.End),
-        ) {
-            Text("운행 종료", fontSize = 22.sp)
-        }
-    }
-}
