@@ -27,7 +27,6 @@ import androidx.compose.ui.text.style.TextAlign
 import androidx.compose.ui.unit.dp
 import androidx.compose.ui.unit.sp
 
-// 차량 화면은 어두운 배경 + 큰 글씨가 기본입니다.
 internal val Background = Color(0xFF101418)
 internal val Card = Color(0xFF1E252C)
 internal val TextMain = Color(0xFFF2F4F6)
@@ -86,7 +85,7 @@ private fun WaitingScreen(onSimulateBoarding: () -> Unit) {
 
 /**
  * 탑승 직후 기사님께만 보이는 질문. 소리는 내지 않습니다.
- * 자주 누르는 [한국인 승객]을 운전석 쪽(왼쪽)에 둡니다.
+ * 자주 누르는 [한국인 승객]을 운전석 쪽에 둡니다.
  */
 @Composable
 private fun AskForeignerScreen(onKorean: () -> Unit, onForeign: () -> Unit) {

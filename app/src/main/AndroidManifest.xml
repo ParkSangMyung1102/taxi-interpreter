@@ -5,6 +5,9 @@
         android:name="android.hardware.type.automotive"
         android:required="true" />
 
+    <!-- 번역 API(Papago / Google) 호출 -->
+    <uses-permission android:name="android.permission.INTERNET" />
+
     <!-- Pleos Vehicle SDK: 도어 열림/닫힘 조회·구독 -->
     <uses-permission android:name="pleos.car.permission.CAR_DOORS" />
     <!-- Pleos TextToSpeech SDK: 차량 스피커로 음성 안내 -->
@@ -25,7 +28,6 @@
         <activity
             android:name=".MainActivity"
             android:exported="true">
-            <!-- 주행 중에도 쓸 수 있도록 설계한 화면임을 선언 (화면 제한은 주행 규제 상태에 맞춰 앱이 처리) -->
             <meta-data
                 android:name="distractionOptimized"
                 android:value="true" />

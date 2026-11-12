@@ -12,6 +12,9 @@ import androidx.lifecycle.AndroidViewModel
 import com.taxitalk.navi.Navigator
 import com.taxitalk.navi.Place
 import com.taxitalk.navi.Places
+import com.taxitalk.translate.FallbackTranslator
+import com.taxitalk.translate.GoogleTranslator
+import com.taxitalk.translate.PapagoTranslator
 import com.taxitalk.translate.PhrasebookTranslator
 import com.taxitalk.translate.Translator
 import com.taxitalk.vehicle.DoorWatcher
@@ -105,7 +108,7 @@ class TaxiTalkViewModel(app: Application) : AndroidViewModel(app) {
     private val mainHandler = Handler(Looper.getMainLooper())
     private val speaker = Speaker(app, onError = { lastError = it })
     private val listener = Listener(app, onError = { lastError = it })
-    private val translator: Translator = PhrasebookTranslator()
+    private val translator: Translator = createTranslator()
     private val navigator = Navigator(
         app,
         onRouteStarted = ::onRouteStarted,
@@ -227,9 +230,16 @@ class TaxiTalkViewModel(app: Application) : AndroidViewModel(app) {
         val lang = language ?: return
         partialText = ""
         // 아는 장소를 말했다면 목적지 카드를 띄워 기사님 확인을 기다립니다.
-        Places.find(text)?.let { pendingPlace = it }
-        translator.toKorean(text, lang) { korean ->
+        val place = Places.find(text)
+        place?.let { pendingPlace = it }
+        translator.toKorean(text, lang) { translated ->
             mainHandler.post {
+                // 번역 API는 잘못 인식된 지명을 엉뚱하게 옮길 수 있어, 알아본 목적지를 덧붙여 줍니다.
+                val korean = if (translated != null && place != null && place.koreanName !in translated) {
+                    "$translated 목적지는 ${place.koreanName}입니다."
+                } else {
+                    translated
+                }
                 chat += ChatLine(fromPassenger = true, original = text, translated = korean)
                 turn = Turn.SPEAKING_TO_DRIVER
                 val forDriver = korean ?: "승객 말을 번역하지 못했어요. 화면을 확인해 주세요."
@@ -361,6 +371,23 @@ class TaxiTalkViewModel(app: Application) : AndroidViewModel(app) {
         listener.cancel()
         speaker.stopAll()
         partialText = ""
+    }
+
+    /**
+     * local.properties에 넣은 키에 따라 번역 API를 고릅니다. (Papago 우선)
+     * 어떤 API든 실패하면 내장 택시 문장집으로 자동 전환됩니다.
+     */
+    private fun createTranslator(): Translator {
+        val phrasebook = PhrasebookTranslator()
+        val api: Translator? = when {
+            BuildConfig.PAPAGO_CLIENT_ID.isNotBlank() && BuildConfig.PAPAGO_CLIENT_SECRET.isNotBlank() ->
+                PapagoTranslator(BuildConfig.PAPAGO_CLIENT_ID, BuildConfig.PAPAGO_CLIENT_SECRET)
+            BuildConfig.GOOGLE_TRANSLATE_KEY.isNotBlank() ->
+                GoogleTranslator(BuildConfig.GOOGLE_TRANSLATE_KEY)
+            else -> null
+        }
+        android.util.Log.i("TaxiTalkVM", "translator: ${api?.javaClass?.simpleName ?: "Phrasebook only"}")
+        return api?.let { FallbackTranslator(it, phrasebook) } ?: phrasebook
     }
 
     override fun onCleared() {
