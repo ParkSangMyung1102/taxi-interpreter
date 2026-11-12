@@ -69,9 +69,8 @@ private fun WaitingScreen(onSimulateBoarding: () -> Unit) {
         verticalArrangement = Arrangement.Center,
         horizontalAlignment = Alignment.CenterHorizontally,
     ) {
-        Text("택시톡", color = TextMain, fontSize = 56.sp, fontWeight = FontWeight.Bold)
+        Text("승객을 기다리는 중입니다", color = TextMain, fontSize = 48.sp, fontWeight = FontWeight.Bold)
         Spacer(Modifier.height(16.dp))
-        Text("승객을 기다리는 중입니다", color = TextSub, fontSize = 28.sp)
         Text(
             "승객 도어가 열렸다 닫히면 언어 선택 화면이 열립니다",
             color = TextSub,

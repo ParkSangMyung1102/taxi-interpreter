@@ -24,7 +24,7 @@ sealed interface Screen {
 }
 
 /**
- * 택시톡의 두뇌.
+ * 앱의 두뇌.
  * 차량 이벤트(도어)와 화면 입력(국기 터치)을 받아 상태를 바꾸고, 음성 안내를 냅니다.
  */
 class TaxiTalkViewModel(app: Application) : AndroidViewModel(app) {

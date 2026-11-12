@@ -26,7 +26,7 @@ enum class PassengerLanguage(
         koreanName = "영어",
         locale = Locale.forLanguageTag("en-US"),
         choosePrompt = "Please choose your language.",
-        greeting = "Hello! Welcome to TaxiTalk. Where would you like to go?",
+        greeting = "Hello! Welcome to Korea. Where would you like to go?",
     ),
     SPANISH(
         flag = "🇪🇸",
@@ -34,7 +34,7 @@ enum class PassengerLanguage(
         koreanName = "스페인어",
         locale = Locale.forLanguageTag("es-US"),
         choosePrompt = "Por favor, elija su idioma.",
-        greeting = "¡Hola! Bienvenido a TaxiTalk. ¿A dónde le gustaría ir?",
+        greeting = "¡Hola! Bienvenido a Corea. ¿A dónde le gustaría ir?",
     ),
     FRENCH(
         flag = "🇫🇷",
@@ -42,6 +42,6 @@ enum class PassengerLanguage(
         koreanName = "프랑스어",
         locale = Locale.forLanguageTag("fr-CA"),
         choosePrompt = "Veuillez choisir votre langue.",
-        greeting = "Bonjour ! Bienvenue dans TaxiTalk. Où souhaitez-vous aller ?",
+        greeting = "Bonjour ! Bienvenue en Corée. Où souhaitez-vous aller ?",
     ),
 }
