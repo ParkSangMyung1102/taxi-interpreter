@@ -44,7 +44,11 @@ fun TaxiTalkScreen(vm: TaxiTalkViewModel) {
     ) {
         when (val s = vm.screen) {
             Screen.Waiting -> WaitingScreen(onSimulateBoarding = vm::onPassengerBoarded)
-            Screen.ChooseLanguage -> LanguageScreen(onChoose = vm::chooseLanguage)
+            Screen.AskForeigner -> AskForeignerScreen(
+                onKorean = vm::koreanPassenger,
+                onForeign = vm::foreignPassenger,
+            )
+            Screen.ChooseLanguage -> LanguageScreen(onChoose = vm::chooseLanguage, onCancel = vm::finishRide)
             is Screen.Talking -> TalkingScreen(vm, s.language)
         }
         vm.lastError?.let {
@@ -80,8 +84,70 @@ private fun WaitingScreen(onSimulateBoarding: () -> Unit) {
     }
 }
 
+/**
+ * 탑승 직후 기사님께만 보이는 질문. 소리는 내지 않습니다.
+ * 자주 누르는 [한국인 승객]을 운전석 쪽(왼쪽)에 둡니다.
+ */
 @Composable
-private fun LanguageScreen(onChoose: (PassengerLanguage) -> Unit) {
+private fun AskForeignerScreen(onKorean: () -> Unit, onForeign: () -> Unit) {
+    Column(Modifier.fillMaxSize()) {
+        Text(
+            "외국인 승객인가요?",
+            color = TextMain,
+            fontSize = 44.sp,
+            fontWeight = FontWeight.Bold,
+            textAlign = TextAlign.Center,
+            modifier = Modifier.fillMaxWidth(),
+        )
+        Text(
+            "누르지 않으면 15초 뒤 한국인 승객으로 처리됩니다",
+            color = TextSub,
+            fontSize = 22.sp,
+            textAlign = TextAlign.Center,
+            modifier = Modifier
+                .fillMaxWidth()
+                .padding(top = 8.dp, bottom = 32.dp),
+        )
+        Row(
+            Modifier
+                .fillMaxWidth()
+                .weight(1f),
+            horizontalArrangement = Arrangement.spacedBy(24.dp),
+        ) {
+            ChoiceCard("🇰🇷", "한국인 승객", "통역 없이 운행", Modifier.weight(1f), onKorean)
+            ChoiceCard("🌏", "외국인 승객", "언어 선택 후 통역 시작", Modifier.weight(1f), onForeign, highlight = true)
+        }
+    }
+}
+
+@Composable
+private fun ChoiceCard(
+    icon: String,
+    title: String,
+    subtitle: String,
+    modifier: Modifier,
+    onClick: () -> Unit,
+    highlight: Boolean = false,
+) {
+    Column(
+        modifier
+            .fillMaxHeight()
+            .clip(RoundedCornerShape(24.dp))
+            .background(if (highlight) Accent else Card)
+            .clickable(onClick = onClick)
+            .padding(24.dp),
+        verticalArrangement = Arrangement.Center,
+        horizontalAlignment = Alignment.CenterHorizontally,
+    ) {
+        Text(icon, fontSize = 110.sp)
+        Spacer(Modifier.height(16.dp))
+        Text(title, color = TextMain, fontSize = 44.sp, fontWeight = FontWeight.Bold)
+        Text(subtitle, color = if (highlight) TextMain else TextSub, fontSize = 24.sp)
+    }
+}
+
+@Composable
+private fun LanguageScreen(onChoose: (PassengerLanguage) -> Unit, onCancel: () -> Unit) {
     Column(Modifier.fillMaxSize()) {
         Text(
             "Choose your language · Elija su idioma · Choisissez votre langue",
@@ -109,6 +175,15 @@ private fun LanguageScreen(onChoose: (PassengerLanguage) -> Unit) {
             PassengerLanguage.entries.forEach { lang ->
                 FlagCard(lang, Modifier.weight(1f), onClick = { onChoose(lang) })
             }
+        }
+        // 기사님이 [외국인 승객]을 잘못 눌렀을 때 되돌아가는 버튼 (운전석 쪽 왼쪽 아래)
+        OutlinedButton(
+            onClick = onCancel,
+            modifier = Modifier
+                .padding(top = 24.dp)
+                .height(80.dp),
+        ) {
+            Text("🇰🇷 한국인 승객이에요", fontSize = 26.sp, color = TextSub)
         }
     }
 }

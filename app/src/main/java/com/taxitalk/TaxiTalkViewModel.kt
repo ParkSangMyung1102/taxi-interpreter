@@ -23,7 +23,10 @@ sealed interface Screen {
     /** 승객을 기다리는 중 */
     data object Waiting : Screen
 
-    /** 승객이 탔고, 언어를 고르는 중 */
+    /** 승객이 탔고, 기사님이 외국인/한국인 승객인지 고르는 중 (소리 없음) */
+    data object AskForeigner : Screen
+
+    /** 외국인 승객이고, 언어를 고르는 중 */
     data object ChooseLanguage : Screen
 
     /** 언어를 골랐고, 통역 중 */
@@ -68,8 +71,13 @@ data class ChatLine(
  */
 class TaxiTalkViewModel(app: Application) : AndroidViewModel(app) {
 
-    var screen by mutableStateOf<Screen>(Screen.Waiting)
-        private set
+    private var currentScreen by mutableStateOf<Screen>(Screen.Waiting)
+    var screen: Screen
+        get() = currentScreen
+        private set(value) {
+            android.util.Log.d("TaxiTalkVM", "screen $currentScreen -> $value")
+            currentScreen = value
+        }
 
     var turn by mutableStateOf(Turn.GREETING)
         private set
@@ -128,9 +136,28 @@ class TaxiTalkViewModel(app: Application) : AndroidViewModel(app) {
 
     // ------------------------------------------------------------------ 탑승과 언어 선택
 
-    /** 도어가 열렸다 닫힘 → 승객 탑승 */
+    /**
+     * 도어가 열렸다 닫힘 → 승객 탑승.
+     * 대부분은 한국인 승객이므로 외국어 안내 없이, 기사님께 화면으로만 물어봅니다.
+     * 아무것도 누르지 않으면 잠시 뒤 한국인 승객으로 보고 대기 화면으로 돌아갑니다.
+     */
     fun onPassengerBoarded() {
-        if (screen == Screen.Waiting) showLanguageChoice()
+        if (screen != Screen.Waiting) return
+        stopEverything()
+        screen = Screen.AskForeigner
+        mainHandler.postDelayed(::koreanPassenger, ASK_FOREIGNER_TIMEOUT_MS)
+    }
+
+    /** 기사님: [외국인 승객] → 언어 선택 */
+    fun foreignPassenger() {
+        if (screen == Screen.AskForeigner) showLanguageChoice()
+    }
+
+    /** 기사님: [한국인 승객] (또는 시간 초과) → 통역 없이 대기 */
+    fun koreanPassenger() {
+        if (screen != Screen.AskForeigner) return
+        stopEverything()
+        screen = Screen.Waiting
     }
 
     /** 승객 또는 기사님이 국기를 누름 */
@@ -326,6 +353,9 @@ class TaxiTalkViewModel(app: Application) : AndroidViewModel(app) {
         const val MAX_PROMPT_ROUNDS = 3
         const val PROMPT_PAUSE_MS = 4_000L
         const val RELISTEN_DELAY_MS = 300L
+
+        /** 외국인/한국인 선택 화면에서 아무것도 누르지 않으면 한국인 승객으로 보는 시간 */
+        const val ASK_FOREIGNER_TIMEOUT_MS = 15_000L
 
         /** 기사님의 "네, 갈게요" 같은 승낙 표현 */
         val AFFIRMATIVE = Regex("네|예|알겠|그럼요|물론|오케이|좋아요|갈게요|가겠습니다|출발")
