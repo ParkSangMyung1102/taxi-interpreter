@@ -1,4 +1,4 @@
-package com.taxitalk
+package com.taxigo
 
 import androidx.compose.foundation.background
 import androidx.compose.foundation.clickable
@@ -13,8 +13,6 @@ import androidx.compose.foundation.layout.fillMaxWidth
 import androidx.compose.foundation.layout.height
 import androidx.compose.foundation.layout.padding
 import androidx.compose.foundation.shape.RoundedCornerShape
-import androidx.compose.material3.Button
-import androidx.compose.material3.ButtonDefaults
 import androidx.compose.material3.OutlinedButton
 import androidx.compose.material3.Text
 import androidx.compose.runtime.Composable
@@ -34,7 +32,7 @@ internal val TextSub = Color(0xFF9AA4AE)
 internal val Accent = Color(0xFF3D8BFD)
 
 @Composable
-fun TaxiTalkScreen(vm: TaxiTalkViewModel) {
+fun TaxigoScreen(vm: TaxigoViewModel) {
     Box(
         Modifier
             .fillMaxSize()

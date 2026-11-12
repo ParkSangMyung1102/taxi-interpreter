@@ -1,6 +1,6 @@
-package com.taxitalk.translate
+package com.taxigo.translate
 
-import com.taxitalk.PassengerLanguage
+import com.taxigo.PassengerLanguage
 
 /** 결과 null = 번역 실패. 콜백은 아무 스레드에서나 올 수 있음. */
 interface Translator {

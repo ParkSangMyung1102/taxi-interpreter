@@ -1,4 +1,4 @@
-package com.taxitalk
+package com.taxigo
 
 import java.util.Locale
 

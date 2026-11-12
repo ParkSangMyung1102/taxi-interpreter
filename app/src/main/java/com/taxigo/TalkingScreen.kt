@@ -1,4 +1,4 @@
-package com.taxitalk
+package com.taxigo
 
 import androidx.compose.foundation.background
 import androidx.compose.foundation.layout.Arrangement
@@ -30,7 +30,7 @@ import androidx.compose.ui.platform.LocalContext
 import androidx.compose.ui.text.font.FontWeight
 import androidx.compose.ui.unit.dp
 import androidx.compose.ui.unit.sp
-import com.taxitalk.navi.Place
+import com.taxigo.navi.Place
 
 private val FinishRed = Color(0xFFE5484D)
 private val PassengerBubble = Color(0xFF1E2A38)
@@ -40,7 +40,7 @@ private val DestinationBg = Color(0xFF2A2440)
 
 // 말풍선 큰 글씨 = 상대방이 읽을 번역문, 작은 글씨 = 원문
 @Composable
-fun TalkingScreen(vm: TaxiTalkViewModel, language: PassengerLanguage) {
+fun TalkingScreen(vm: TaxigoViewModel, language: PassengerLanguage) {
     Column(Modifier.fillMaxSize()) {
         Header(language, onChangeLanguage = vm::changeLanguage)
 
@@ -194,7 +194,7 @@ private fun TurnStatus(turn: Turn, partial: String, language: PassengerLanguage)
 }
 
 @Composable
-private fun BottomBar(vm: TaxiTalkViewModel) {
+private fun BottomBar(vm: TaxigoViewModel) {
     Row(
         Modifier.fillMaxWidth(),
         verticalAlignment = Alignment.CenterVertically,
@@ -225,7 +225,7 @@ private fun BottomBar(vm: TaxiTalkViewModel) {
 }
 
 @Composable
-private fun DebugAudioButtons(vm: TaxiTalkViewModel) {
+private fun DebugAudioButtons(vm: TaxigoViewModel) {
     val context = LocalContext.current
     fun feed(file: String) = vm.feedTestAudio(context.assets.open(file).use { it.readBytes() })
     // 세로로 붙여 놓으면 터치 영역이 겹쳐서 아래 버튼이 눌림

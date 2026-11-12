@@ -15,11 +15,11 @@ val localProps = Properties().apply {
 fun localProp(name: String): String = localProps.getProperty(name, "").replace("\"", "")
 
 android {
-    namespace = "com.taxitalk"
+    namespace = "com.taxigo"
     compileSdk = 37
 
     defaultConfig {
-        applicationId = "com.taxitalk"
+        applicationId = "com.taxigo"
         minSdk = 28 // Pleos 요구사항 (서명 키 로테이션)
         targetSdk = 34
         versionCode = 1

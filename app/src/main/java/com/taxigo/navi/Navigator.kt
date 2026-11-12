@@ -1,4 +1,4 @@
-package com.taxitalk.navi
+package com.taxigo.navi
 
 import android.content.Context
 import android.os.Handler

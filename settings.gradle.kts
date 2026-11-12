@@ -15,5 +15,5 @@ dependencyResolutionManagement {
     }
 }
 
-rootProject.name = "TaxiTalk"
+rootProject.name = "Taxigo"
 include(":app")

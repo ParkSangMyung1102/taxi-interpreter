@@ -1,4 +1,4 @@
-package com.taxitalk.vehicle
+package com.taxigo.vehicle
 
 import android.content.Context
 import android.os.Handler

@@ -1,4 +1,4 @@
-package com.taxitalk
+package com.taxigo
 
 import android.app.Application
 import android.content.Intent
@@ -10,17 +10,17 @@ import androidx.compose.runtime.mutableStateListOf
 import androidx.compose.runtime.mutableStateOf
 import androidx.compose.runtime.setValue
 import androidx.lifecycle.AndroidViewModel
-import com.taxitalk.navi.Navigator
-import com.taxitalk.navi.Place
-import com.taxitalk.navi.Places
-import com.taxitalk.translate.FallbackTranslator
-import com.taxitalk.translate.GoogleTranslator
-import com.taxitalk.translate.PapagoTranslator
-import com.taxitalk.translate.PhrasebookTranslator
-import com.taxitalk.translate.Translator
-import com.taxitalk.vehicle.DoorWatcher
-import com.taxitalk.voice.Listener
-import com.taxitalk.voice.Speaker
+import com.taxigo.navi.Navigator
+import com.taxigo.navi.Place
+import com.taxigo.navi.Places
+import com.taxigo.translate.FallbackTranslator
+import com.taxigo.translate.GoogleTranslator
+import com.taxigo.translate.PapagoTranslator
+import com.taxigo.translate.PhrasebookTranslator
+import com.taxigo.translate.Translator
+import com.taxigo.vehicle.DoorWatcher
+import com.taxigo.voice.Listener
+import com.taxigo.voice.Speaker
 import java.util.Locale
 
 sealed interface Screen {
@@ -41,7 +41,7 @@ data class ChatLine(val fromPassenger: Boolean, val original: String, val transl
  * 스피커로 말하는 동안에는 절대 마이크를 열지 않는다. 번역 음성을 다시 인식해서 무한루프 돎.
  * 그래서 다음 listen은 항상 Speaker onDone에서 시작.
  */
-class TaxiTalkViewModel(app: Application) : AndroidViewModel(app) {
+class TaxigoViewModel(app: Application) : AndroidViewModel(app) {
 
     private var _screen by mutableStateOf<Screen>(Screen.Waiting)
     var screen: Screen
@@ -307,7 +307,7 @@ class TaxiTalkViewModel(app: Application) : AndroidViewModel(app) {
     }
 
     private companion object {
-        const val TAG = "TaxiTalkVM"
+        const val TAG = "TaxigoVM"
         const val MAX_PROMPT_ROUNDS = 3
         const val PROMPT_PAUSE_MS = 4_000L
         const val RELISTEN_DELAY_MS = 300L

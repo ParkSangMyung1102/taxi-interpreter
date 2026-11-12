@@ -1,10 +1,10 @@
-package com.taxitalk.translate
+package com.taxigo.translate
 
-import com.taxitalk.PassengerLanguage
-import com.taxitalk.PassengerLanguage.ENGLISH
-import com.taxitalk.PassengerLanguage.FRENCH
-import com.taxitalk.PassengerLanguage.SPANISH
-import com.taxitalk.navi.Places
+import com.taxigo.PassengerLanguage
+import com.taxigo.PassengerLanguage.ENGLISH
+import com.taxigo.PassengerLanguage.FRENCH
+import com.taxigo.PassengerLanguage.SPANISH
+import com.taxigo.navi.Places
 
 /**
  * 오프라인용 택시 문장집. 문장 번역이 아니라 키워드로 자주 쓰는 표현만 잡는다.

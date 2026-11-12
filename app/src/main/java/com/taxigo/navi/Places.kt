@@ -1,4 +1,4 @@
-package com.taxitalk.navi
+package com.taxigo.navi
 
 // TODO 장소 검색 API 붙이면 대체. 좌표는 입구/역 기준 대략값.
 data class Place(
