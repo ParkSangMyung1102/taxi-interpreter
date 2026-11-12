@@ -35,6 +35,8 @@ android {
     buildTypes {
         release {
             isMinifyEnabled = false
+            // 공모전 제출용: 별도 키스토어 없이 바로 설치되도록 debug 키로 서명. 앱마켓 배포 땐 교체.
+            signingConfig = signingConfigs.getByName("debug")
         }
     }
 
