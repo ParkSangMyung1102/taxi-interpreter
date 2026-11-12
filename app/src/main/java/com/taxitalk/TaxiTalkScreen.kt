@@ -70,23 +70,17 @@ private fun WaitingScreen(onSimulateBoarding: () -> Unit) {
     ) {
         Text("승객을 기다리는 중입니다", color = TextMain, fontSize = 48.sp, fontWeight = FontWeight.Bold)
         Spacer(Modifier.height(16.dp))
-        Text(
-            "승객 문이 열렸다 닫히면 언어 선택 화면이 열립니다",
-            color = TextSub,
-            fontSize = 20.sp,
-        )
-        Spacer(Modifier.height(48.dp))
-        // 개발용: 버추얼 콘솔 없이도 흐름을 확인하는 버튼
-        OutlinedButton(onClick = onSimulateBoarding) {
-            Text("탑승 테스트", fontSize = 18.sp, color = TextSub)
+        Text("승객이 타면 외국인 승객인지 물어봅니다", color = TextSub, fontSize = 20.sp)
+        if (BuildConfig.DEBUG) {
+            Spacer(Modifier.height(48.dp))
+            OutlinedButton(onClick = onSimulateBoarding) {
+                Text("탑승 테스트", fontSize = 18.sp, color = TextSub)
+            }
         }
     }
 }
 
-/**
- * 탑승 직후 기사님께만 보이는 질문. 소리는 내지 않습니다.
- * 자주 누르는 [한국인 승객]을 운전석 쪽에 둡니다.
- */
+// 자주 누르는 쪽(한국인)을 운전석 쪽 왼쪽에
 @Composable
 private fun AskForeignerScreen(onKorean: () -> Unit, onForeign: () -> Unit) {
     Column(Modifier.fillMaxSize()) {
@@ -175,7 +169,7 @@ private fun LanguageScreen(onChoose: (PassengerLanguage) -> Unit, onCancel: () -
                 FlagCard(lang, Modifier.weight(1f), onClick = { onChoose(lang) })
             }
         }
-        // 기사님이 [외국인 승객]을 잘못 눌렀을 때 되돌아가는 버튼 (운전석 쪽 왼쪽 아래)
+        // 외국인 승객 잘못 눌렀을 때
         OutlinedButton(
             onClick = onCancel,
             modifier = Modifier
@@ -187,7 +181,6 @@ private fun LanguageScreen(onChoose: (PassengerLanguage) -> Unit, onCancel: () -
     }
 }
 
-/** 운전석에서 한 번에 누를 수 있도록 크게 만든 국기 버튼 */
 @Composable
 private fun FlagCard(lang: PassengerLanguage, modifier: Modifier, onClick: () -> Unit) {
     Column(

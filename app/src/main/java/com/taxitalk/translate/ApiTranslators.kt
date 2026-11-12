@@ -8,14 +8,10 @@ import java.net.URL
 import java.net.URLEncoder
 import java.util.concurrent.Executors
 
-/**
- * 인터넷 번역 API를 쓰는 번역기들의 공통 부분.
- * - 네트워크는 백그라운드 스레드에서 호출하고, 결과는 onResult로 돌려줍니다(호출한 쪽에서 메인 스레드로 옮김).
- * - 차 안 대화가 멈추지 않도록 짧은 제한 시간을 둡니다. 실패하면 null을 돌려줍니다.
- */
+// 대화가 멈추면 안 되니 타임아웃은 짧게. 예외는 전부 null로.
 abstract class HttpTranslator : Translator {
 
-    /** source/target: "ko", "en", "es", "fr" 같은 언어 코드 */
+    // source/target: ISO 639-1 (ko, en, es, fr)
     protected abstract fun request(text: String, source: String, target: String): String?
 
     override fun toKorean(text: String, from: PassengerLanguage, onResult: (String?) -> Unit) =
@@ -66,7 +62,7 @@ abstract class HttpTranslator : Translator {
     }
 }
 
-/** 네이버 클라우드 Papago Translation (한국어 번역 품질이 좋음) */
+// NCP Papago Translation
 class PapagoTranslator(private val clientId: String, private val clientSecret: String) : HttpTranslator() {
     override fun request(text: String, source: String, target: String): String? {
         val json = post(
@@ -82,7 +78,7 @@ class PapagoTranslator(private val clientId: String, private val clientSecret: S
     }
 }
 
-/** Google Cloud Translation (v2) */
+// Cloud Translation v2
 class GoogleTranslator(private val apiKey: String) : HttpTranslator() {
     override fun request(text: String, source: String, target: String): String? {
         val body = JSONObject()
@@ -102,10 +98,7 @@ class GoogleTranslator(private val apiKey: String) : HttpTranslator() {
     }
 }
 
-/**
- * 먼저 primary(번역 API)로 번역하고, 실패하면 fallback(택시 문장집)으로 번역합니다.
- * 인터넷이 끊겨도 기본적인 택시 대화는 계속되도록 하기 위함입니다.
- */
+// API 실패(오프라인, 키 오류, 타임아웃) 시 문장집으로
 class FallbackTranslator(
     private val primary: Translator,
     private val fallback: Translator,

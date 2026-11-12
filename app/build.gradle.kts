@@ -5,11 +5,10 @@ plugins {
     id("org.jetbrains.kotlin.plugin.compose")
 }
 
-// 번역 API 키는 git에 올라가지 않는 local.properties에서 읽습니다.
-//   papago.clientId=...       (네이버 클라우드 Papago Translation)
-//   papago.clientSecret=...
-//   google.translateKey=...   (Google Cloud Translation)
-// 둘 다 없으면 앱은 내장 택시 문장집으로 번역합니다.
+// 번역 API 키 (local.properties, 커밋 X)
+//   papago.clientId / papago.clientSecret
+//   google.translateKey
+// 없으면 문장집만 사용
 val localProps = Properties().apply {
     rootProject.file("local.properties").takeIf { it.exists() }?.inputStream()?.use { load(it) }
 }
@@ -21,9 +20,7 @@ android {
 
     defaultConfig {
         applicationId = "com.taxitalk"
-        // Pleos 요구사항: 차량 보안(사이닝 키 로테이션) 때문에 minSdk 28 이상
-        minSdk = 28
-        // Pleos Connect 에뮬레이터는 Android 14(API 34)
+        minSdk = 28 // Pleos 요구사항 (서명 키 로테이션)
         targetSdk = 34
         versionCode = 1
         versionName = "0.1.0"
@@ -51,13 +48,11 @@ android {
 }
 
 dependencies {
-    // Pleos Connect SDK
     implementation("ai.pleos.playground:Vehicle:2.3.2")
     implementation("ai.pleos.playground:TextToSpeech:3.3.1")
     implementation("ai.pleos.playground:SpeechToText:3.3.1")
     implementation("ai.pleos.playground:NaviHelper:3.0.5")
 
-    // 화면(Jetpack Compose)
     implementation(platform("androidx.compose:compose-bom:2025.06.01"))
     implementation("androidx.compose.ui:ui")
     implementation("androidx.compose.material3:material3")

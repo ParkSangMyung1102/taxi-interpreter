@@ -9,47 +9,34 @@ import ai.pleos.playground.vehicle.api.model.area.DoorArea
 import ai.pleos.playground.vehicle.constant.area.DoorValue
 import ai.pleos.playground.vehicle.listener.DoorPositionListener
 
-/**
- * 승객 도어(조수석, 뒷좌석 좌우)
- * "문이 열렸다가 모두 닫힘" = 승객이 탔다 고 판단해 알려 줍니다.
- */
-
+/** 승객 도어가 열렸다가 전부 닫히면 탑승으로 본다. */
 class DoorWatcher(
     context: Context,
     private val onBoarded: () -> Unit,
     private val onError: (String) -> Unit,
 ) {
     private val vehicle = Vehicle(context)
-    private val mainHandler = Handler(Looper.getMainLooper())
+    private val handler = Handler(Looper.getMainLooper())
 
-    /** 지켜볼 승객 도어 (운전석 ROW_1_LEFT는 제외) */
-    private val passengerDoors = listOf(
-        DoorValue.ROW_1_RIGHT,
-        DoorValue.ROW_2_LEFT,
-        DoorValue.ROW_2_RIGHT,
-    )
-
-    /** 현재 열려 있는 도어 */
+    private val watched = listOf(DoorValue.ROW_1_RIGHT, DoorValue.ROW_2_LEFT, DoorValue.ROW_2_RIGHT)
+    private val listeners = mutableMapOf<DoorValue, DoorPositionListener>()
     private val openDoors = mutableSetOf<DoorValue>()
 
-    /** 문이 한 번이라도 열렸는지 (닫힘만 보고 탑승으로 오해하지 않기 위해) */
-    private var doorWasOpened = false
-
-    private val listeners = mutableMapOf<DoorValue, DoorPositionListener>()
+    // 구독 직후 들어오는 "닫힘" 초기값을 탑승으로 착각하지 않도록
+    private var openedSinceLastBoarding = false
 
     fun start() {
         vehicle.initialize()
         val door = vehicle.getDoor()
-        for (value in passengerDoors) {
+        watched.forEach { value ->
             val listener = object : DoorPositionListener {
-                // 0 = 닫힘, 0보다 크면 열림 (Sample App 기준 범위 0..1)
                 override fun onPositionUpdated(pos: Int?) {
-                    mainHandler.post { handlePosition(value, pos) }
+                    handler.post { onPosition(value, pos) }
                 }
 
                 override fun onFailed(e: Exception) {
-                    Log.e(TAG, "door $value failed", e)
-                    mainHandler.post { onError("도어 $value: ${e.message}") }
+                    Log.e(TAG, "door $value", e)
+                    handler.post { onError("도어 $value: ${e.message}") }
                 }
             }
             listeners[value] = listener
@@ -59,25 +46,24 @@ class DoorWatcher(
 
     fun stop() {
         val door = vehicle.getDoor()
-        listeners.forEach { (value, listener) ->
-            door.unregisterDoorPosition(DoorArea(value), listener)
-        }
+        listeners.forEach { (value, l) -> door.unregisterDoorPosition(DoorArea(value), l) }
         listeners.clear()
         vehicle.release()
     }
 
-    private fun handlePosition(value: DoorValue, pos: Int?) {
-        if (pos == null) return
-        Log.d(TAG, "door $value position=$pos")
+    // pos: 0 닫힘, 1 열림
+    private fun onPosition(value: DoorValue, pos: Int?) {
+        pos ?: return
+        Log.d(TAG, "$value -> $pos")
         if (pos > 0) {
             openDoors += value
-            doorWasOpened = true
-        } else {
-            openDoors -= value
-            if (doorWasOpened && openDoors.isEmpty()) {
-                doorWasOpened = false
-                onBoarded()
-            }
+            openedSinceLastBoarding = true
+            return
+        }
+        openDoors -= value
+        if (openedSinceLastBoarding && openDoors.isEmpty()) {
+            openedSinceLastBoarding = false
+            onBoarded()
         }
     }
 

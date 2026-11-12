@@ -11,7 +11,6 @@ dependencyResolutionManagement {
     repositories {
         google()
         mavenCentral()
-        // Pleos Connect SDK (Vehicle, TextToSpeech, SpeechToText, NaviHelper)
         maven("https://nexus-playground.pleos.ai/repository/maven-releases/")
     }
 }

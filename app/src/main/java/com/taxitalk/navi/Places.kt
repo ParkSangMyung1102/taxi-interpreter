@@ -1,12 +1,6 @@
 package com.taxitalk.navi
 
-/**
- * 외국인 승객이 자주 가는 장소 목록 (장소 검색 API를 붙이기 전까지 사용).
- *
- * aliases: 승객이 말할 수 있는 이름들(소문자). 음성 인식이 한국 지명을 잘못 알아듣는 경우가 많아
- *          자주 나오는 변형도 함께 넣었습니다. 앞쪽 장소일수록 먼저 찾습니다.
- * 좌표는 각 장소의 대표 위치(입구·역 등) 근사값입니다.
- */
+// TODO 장소 검색 API 붙이면 대체. 좌표는 입구/역 기준 대략값.
 data class Place(
     val koreanName: String,
     val englishName: String,
@@ -57,13 +51,12 @@ object Places {
         Place("북촌한옥마을", "Bukchon Hanok Village",
             listOf("bukchon", "hanok village"),
             37.5826, 126.9830, "서울 종로구 계동길 37"),
-        // 마지막 보루: 이름은 못 알아들었지만 "palace"라고 했다면 가장 유명한 궁궐로 추정
+        // STT가 궁 이름을 자주 뭉갬("jai young bakhan palace"). palace만 잡혀도 경복궁으로.
         Place("경복궁", "Gyeongbokgung Palace",
             listOf("palace", "palacio", "palais"),
             37.5796, 126.9770, "서울 종로구 사직로 161"),
     )
 
-    /** 승객 말에서 장소를 찾습니다. 없으면 null */
     fun find(text: String): Place? {
         val t = text.lowercase()
         return all.firstOrNull { place -> place.aliases.any { it in t } }

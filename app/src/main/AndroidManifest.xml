@@ -5,16 +5,11 @@
         android:name="android.hardware.type.automotive"
         android:required="true" />
 
-    <!-- 번역 API(Papago / Google) 호출 -->
     <uses-permission android:name="android.permission.INTERNET" />
 
-    <!-- Pleos Vehicle SDK: 도어 열림/닫힘 조회·구독 -->
     <uses-permission android:name="pleos.car.permission.CAR_DOORS" />
-    <!-- Pleos TextToSpeech SDK: 차량 스피커로 음성 안내 -->
     <uses-permission android:name="pleos.car.permission.TTS_SERVICE" />
-    <!-- Pleos SpeechToText SDK: 차량 마이크로 음성 인식 -->
     <uses-permission android:name="pleos.car.permission.STT_SERVICE" />
-    <!-- Pleos NaviHelper SDK: 차량 내비게이션에 목적지 설정 -->
     <uses-permission android:name="pleos.car.permission.NAVI_ROUTE" />
     <uses-permission android:name="pleos.car.permission.NAVI_ROUTE_SEARCH" />
     <uses-permission android:name="pleos.car.permission.NAVI_CUSTOM_MAP" />

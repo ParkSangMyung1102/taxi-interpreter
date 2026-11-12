@@ -11,60 +11,52 @@ import ai.pleos.playground.navi.data.RouteStartInfo
 import ai.pleos.playground.navi.helper.NaviHelper
 import ai.pleos.playground.navi.helper.listener.NaviHelperEventListener
 
-/**
- * 차량 기본 내비게이션에 목적지를 넘겨주는 도우미 (Pleos NaviHelper SDK).
- *
- * 별도 지도 앱을 만들지 않고, 차량에 이미 있는 내비게이션으로 안내를 시작합니다.
- * 경로 탐색이 시작되면 예상 소요 시간(분)을 알려 줍니다.
- */
+/** 순정 내비에 목적지 전달 (NaviHelper). 경로가 잡히면 예상 소요시간(분)을 넘겨준다. */
 class Navigator(
     context: Context,
     private val onRouteStarted: (place: Place, minutes: Int?) -> Unit,
     private val onError: (String) -> Unit,
 ) {
     private val navi = NaviHelper(context)
-    private val mainHandler = Handler(Looper.getMainLooper())
+    private val handler = Handler(Looper.getMainLooper())
     private var connected = false
-
-    /** 마지막으로 요청한 목적지 (경로 시작 이벤트와 짝을 맞추기 위해) */
     private var requested: Place? = null
 
-    private val listener = object : NaviHelperEventListener {
+    private val events = object : NaviHelperEventListener {
         override fun onRouteStarted(routeStartInfo: RouteStartInfo) {
             Log.d(TAG, "route started $routeStartInfo")
-            mainHandler.post {
+            handler.post {
                 val place = requested ?: return@post
-                // duration 단위는 초로 보고 분으로 바꿉니다. (값이 없으면 null)
+                // duration은 초 단위 (에뮬레이터: 4020 -> 내비 화면 1시간 7분)
                 val minutes = routeStartInfo.duration.takeIf { it > 0 }?.let { (it + 59) / 60 }
                 onRouteStarted(place, minutes)
             }
         }
 
         override fun onError(errorCode: NaviErrorCode) {
-            Log.e(TAG, "navi error $errorCode")
-            mainHandler.post { onError("내비게이션 오류: $errorCode") }
+            Log.e(TAG, "navi $errorCode")
+            handler.post { onError("내비게이션 오류: $errorCode") }
         }
     }
 
     fun start() {
         navi.initialize(
             onConnected = {
-                mainHandler.post {
-                    navi.addListener(listener)
+                handler.post {
+                    navi.addListener(events)
                     connected = true
                 }
             },
             onFailed = { e ->
-                Log.e(TAG, "navi connect failed", e)
-                mainHandler.post { onError("내비게이션 연결 실패: ${e.message}") }
+                Log.e(TAG, "navi connect", e)
+                handler.post { onError("내비게이션 연결 실패: ${e.message}") }
             },
         )
     }
 
-    /** 이 장소로 안내 시작 */
     fun go(place: Place) {
         if (!connected) {
-            onError("내비게이션이 아직 연결되지 않았어요")
+            onError("내비게이션 연결 전")
             return
         }
         requested = place
@@ -82,18 +74,12 @@ class Navigator(
         )
     }
 
-    /** 차량 내비게이션 지도 화면을 앞으로 */
     fun showMap() {
         if (connected) navi.requestNavigationScreen(NavigationScreenRequest.Foreground)
     }
 
-    fun cancel() {
-        requested = null
-        if (connected) navi.cancelRoute()
-    }
-
     fun release() {
-        if (connected) navi.removeListener(listener)
+        if (connected) navi.removeListener(events)
         navi.release()
     }
 

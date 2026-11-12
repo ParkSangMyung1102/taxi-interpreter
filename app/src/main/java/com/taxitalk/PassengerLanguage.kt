@@ -2,22 +2,13 @@ package com.taxitalk
 
 import java.util.Locale
 
-/**
- * 승객이 고를 수 있는 언어 목록.
- *
- * Pleos 음성 SDK가 지원하는 언어(en-US, es-US, fr-CA)만 넣었습니다.
- * 중국어·일본어는 외부 음성 API를 붙이는 2단계에서 추가합니다.
- */
+// Pleos STT/TTS 지원 로케일(en-US, es-US, fr-CA)만. zh/ja는 외부 음성 API 붙인 뒤 추가.
 enum class PassengerLanguage(
     val flag: String,
-    /** 그 나라 말로 쓴 언어 이름 (승객이 읽는 글자) */
     val nativeName: String,
-    /** 기사님이 읽는 한국어 이름 */
     val koreanName: String,
     val locale: Locale,
-    /** 언어 선택 화면에서 번갈아 들려주는 안내 */
     val choosePrompt: String,
-    /** 언어를 고른 뒤 승객에게 들려주는 첫 인사 */
     val greeting: String,
 ) {
     ENGLISH(
@@ -43,5 +34,11 @@ enum class PassengerLanguage(
         locale = Locale.forLanguageTag("fr-CA"),
         choosePrompt = "Veuillez choisir votre langue.",
         greeting = "Bonjour ! Bienvenue en Corée. Où souhaitez-vous aller ?",
-    ),
+    );
+
+    fun routeStarted(place: String, minutes: Int?): String = when (this) {
+        ENGLISH -> "Navigation to $place has started." + (minutes?.let { " It takes about $it minutes." } ?: "")
+        SPANISH -> "Se inició la navegación a $place." + (minutes?.let { " Tarda unos $it minutos." } ?: "")
+        FRENCH -> "La navigation vers $place a commencé." + (minutes?.let { " Cela prend environ $it minutes." } ?: "")
+    }
 }

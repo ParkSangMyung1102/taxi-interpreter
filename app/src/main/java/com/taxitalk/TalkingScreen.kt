@@ -38,12 +38,7 @@ private val DriverBubble = Color(0xFF26302A)
 private val Listening = Color(0xFF4ADE80)
 private val DestinationBg = Color(0xFF2A2440)
 
-/**
- * 통역 화면.
- * - 가운데: 대화 기록 (승객 말은 왼쪽, 기사님 말은 오른쪽, 큰 글씨는 상대방이 읽을 번역)
- * - 아래: 지금 누구 차례인지 + 인식 중인 말
- * - 맨 아래 왼쪽(운전석 쪽): 크게 만든 운행 종료 버튼
- */
+// 말풍선 큰 글씨 = 상대방이 읽을 번역문, 작은 글씨 = 원문
 @Composable
 fun TalkingScreen(vm: TaxiTalkViewModel, language: PassengerLanguage) {
     Column(Modifier.fillMaxSize()) {
@@ -120,7 +115,6 @@ private fun ChatBubble(line: ChatLine, language: PassengerLanguage) {
     }
 }
 
-/** 승객이 말한 목적지. 기사님이 "네"라고 하거나 [안내 시작]을 누르면 내비게이션에 설정됩니다. */
 @Composable
 private fun PendingDestinationCard(place: Place, onStart: () -> Unit, onDismiss: () -> Unit) {
     Row(
@@ -206,7 +200,7 @@ private fun BottomBar(vm: TaxiTalkViewModel) {
         verticalAlignment = Alignment.CenterVertically,
         horizontalArrangement = Arrangement.spacedBy(16.dp),
     ) {
-        // 운전석(왼쪽)에서 바로 누를 수 있도록 왼쪽 아래에 크게 둡니다.
+        // 운전석 쪽
         Button(
             onClick = vm::finishRide,
             colors = ButtonDefaults.buttonColors(containerColor = FinishRed),
@@ -230,12 +224,11 @@ private fun BottomBar(vm: TaxiTalkViewModel) {
     }
 }
 
-/** 개발용: 마이크 없이 녹음 파일로 통역 흐름을 확인하는 버튼 (디버그 빌드에만 표시) */
 @Composable
 private fun DebugAudioButtons(vm: TaxiTalkViewModel) {
     val context = LocalContext.current
     fun feed(file: String) = vm.feedTestAudio(context.assets.open(file).use { it.readBytes() })
-    // 두 버튼의 터치 영역이 겹치지 않도록 가로로 충분히 띄워 둡니다.
+    // 세로로 붙여 놓으면 터치 영역이 겹쳐서 아래 버튼이 눌림
     Row(horizontalArrangement = Arrangement.spacedBy(24.dp)) {
         OutlinedButton(onClick = { feed("test_passenger_en.pcm") }) {
             Text("테스트: 승객 음성", fontSize = 16.sp, color = TextSub)
