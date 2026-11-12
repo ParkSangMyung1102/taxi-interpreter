@@ -1,0 +1,33 @@
+<?xml version="1.0" encoding="utf-8"?>
+<manifest xmlns:android="http://schemas.android.com/apk/res/android">
+
+    <!-- 차량용(Android Automotive) 앱임을 선언 -->
+    <uses-feature
+        android:name="android.hardware.type.automotive"
+        android:required="true" />
+
+    <!-- Pleos Vehicle SDK: 도어 열림/닫힘 조회·구독 -->
+    <uses-permission android:name="pleos.car.permission.CAR_DOORS" />
+    <!-- Pleos TextToSpeech SDK: 차량 스피커로 음성 안내 -->
+    <uses-permission android:name="pleos.car.permission.TTS_SERVICE" />
+
+    <application
+        android:allowBackup="false"
+        android:label="@string/app_name"
+        android:supportsRtl="true"
+        android:theme="@android:style/Theme.DeviceDefault.NoActionBar">
+
+        <activity
+            android:name=".MainActivity"
+            android:exported="true">
+            <!-- 주행 중에도 쓸 수 있도록 설계한 화면임을 선언 (화면 제한은 주행 규제 상태에 맞춰 앱이 처리) -->
+            <meta-data
+                android:name="distractionOptimized"
+                android:value="true" />
+            <intent-filter>
+                <action android:name="android.intent.action.MAIN" />
+                <category android:name="android.intent.category.LAUNCHER" />
+            </intent-filter>
+        </activity>
+    </application>
+</manifest>
